@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Opening…</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+         background: #fff; color: #555; }
+  @media (prefers-color-scheme: dark) { body { background: #111; color: #aaa; } }
+  p { margin: 0 16px; text-align: center; }
+</style>
+</head>
+<body>
+<p id="msg">Opening…</p>
+<script>
+  // Looks the link up in the tracker (which records the click) and goes there.
+  // The target comes only from the tracker's stored links, so this page cannot be
+  // used to send anyone to an arbitrary address.
+  (function () {
+    var TRACKER = 'https://script.google.com/macros/s/AKfycbweIyl0IaSz3I1DT9lRg5shcOQQHB-hX1k28l-0ejlVNeavCLk3crcBfLUj9amjkMj0/exec';
+    var q = new URLSearchParams(location.search);
+    var id = q.get('i') || '', l = q.get('l') || '';
+    var msg = document.getElementById('msg');
+    var done = false;
+    function fail() { if (!done) { done = true; msg.textContent = 'This link is no longer available.'; } }
+    if (!/^[A-Za-z0-9_-]{8,48}$/.test(id) || !/^\d{1,3}$/.test(l)) { fail(); return; }
+    window.__go = function (r) {
+      if (done) return;
+      if (r && typeof r.url === 'string' && /^https?:\/\//i.test(r.url)) { done = true; location.replace(r.url); }
+      else fail();
+    };
+    var s = document.createElement('script');
+    s.src = TRACKER + '?t=c&id=' + encodeURIComponent(id) + '&l=' + encodeURIComponent(l) + '&cb=__go';
+    s.onerror = fail;
+    document.head.appendChild(s);
+    setTimeout(fail, 10000);
+  })();
+</script>
+</body>
+</html>
