@@ -29,16 +29,20 @@
     var done = false;
     function fail() { if (!done) { done = true; msg.textContent = 'This link is no longer available.'; } }
     if (!/^[A-Za-z0-9_-]{8,48}$/.test(id) || !/^\d{1,3}$/.test(l)) { fail(); return; }
-    window.__go = function (r) {
-      if (done) return;
-      if (r && typeof r.url === 'string' && /^https?:\/\//i.test(r.url)) { done = true; location.replace(r.url); }
-      else fail();
-    };
-    var s = document.createElement('script');
-    s.src = TRACKER + '?t=c&id=' + encodeURIComponent(id) + '&l=' + encodeURIComponent(l) + '&cb=__go';
-    s.onerror = fail;
-    document.head.appendChild(s);
-    setTimeout(fail, 10000);
+    // fetch without cookies: a <script> tag would send Google cookies, and a browser signed
+    // in to several Google accounts then gets a sign-in page instead of the answer.
+    fetch(TRACKER + '?t=c&id=' + encodeURIComponent(id) + '&l=' + encodeURIComponent(l) + '&cb=__go',
+          { credentials: 'omit', cache: 'no-store' })
+      .then(function (res) { return res.text(); })
+      .then(function (txt) {
+        var a = txt.indexOf('('), b = txt.lastIndexOf(')');
+        var r = (a > -1 && b > a) ? JSON.parse(txt.slice(a + 1, b)) : null;
+        if (done) return;
+        if (r && typeof r.url === 'string' && /^https?:\/\//i.test(r.url)) { done = true; location.replace(r.url); }
+        else fail();
+      })
+      .catch(fail);
+    setTimeout(fail, 15000);
   })();
 </script>
 </body>
